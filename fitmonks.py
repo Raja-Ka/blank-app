@@ -6,17 +6,41 @@ from plotly.subplots import make_subplots
 
 import datetime
 
-# import plotly.express as px
-
-# colorscales = px.colors.named_colorscales()
 
 # df = pd.read_csv('zoomrx.csv')
 
 # uploaded_file = st.file_uploader("Choose a file")
-uploaded_file = "data-2024-9-22-10.csv"
-if uploaded_file is not None:
+# uploaded_file = "https://drive.google.com/file/d/1nR0jr4mDdqMAN5s0002NCzGfvDf1Rm1u/view?usp=sharing"
+# url='https://drive.google.com/file/d/1nR0jr4mDdqMAN5s0002NCzGfvDf1Rm1u/view?usp=sharing'
+
+# df = pd.read_csv(url)
+# uploaded_file = "data-2024-9-22-10.csv"
+st.header("Strava - Club Activities")
+selected_club = st.selectbox(
+    "Select Club", ['ZoomRx', 'FitMonks']
+)
+
+if selected_club == 'ZoomRx':
+    url = 'https://drive.google.com/file/d/1bY3PUF6DhhvsXiBYbZaSzTi2jNCmmJZ3/view?usp=sharing'
+else:
+    url = 'https://drive.google.com/file/d/1HjgpkDDgNYQaNLYMfpaJd0yk5gET6iQS/view?usp=sharing'
+
+
+url='https://drive.google.com/uc?id=' + url.split('/')[-2]
+
+@st.cache_data  # 👈 Add the caching decorator
+def load_data(url):
+    df = pd.read_csv(url)
+    return df
+
+
+
+
+if url is not None:
     
-    df = pd.read_csv(uploaded_file)
+    df = load_data(url)
+    
+    # df = pd.read_csv(url)
 
     df.drop(["Athlete", 'Activity', 'Location', 'Unit', 'Pace', 'Elev', 'Calo', 'EstPace', 'EstSpeed'], axis='columns', inplace=True)
     df = df.rename(columns={df.columns[0]: "Activity_Type"})
@@ -39,6 +63,7 @@ if uploaded_file is not None:
     min_date = datetime.datetime(2024, 9, 1).date() 
     # min_date = df['Activity_Date'].min()
     max_date = df['Activity_Date'].max()
+    
     
     start_date = st.date_input("Start Date", min_date, min_value=min_date, max_value=max_date)  # min_value=min_date
     end_date = st.date_input("End Date", max_date, min_value=start_date, max_value=max_date)
@@ -84,9 +109,10 @@ if uploaded_file is not None:
 
     summary_df = summary_df.sort_values(by=['Unique_Days'], ascending=False)
 
-    # numRows = summary_df.shape[0]
-    # df_height = (numRows + 1) * 35 + 3
-    # st.dataframe(summary_df, hide_index = True, height=df_height)
+    st.subheader("Summary")
+    numRows = summary_df.shape[0]
+    df_height = (numRows + 1) * 35 + 3
+    st.dataframe(summary_df, hide_index = True, height=df_height)
 
 
     col1, col2 = st.columns(2)
@@ -96,6 +122,7 @@ if uploaded_file is not None:
         fig.add_trace(go.Bar(x=summary_df['Member_Name'], y=summary_df['Unique_Days'],
                             name='Unique Days'))
         fig.update_layout(
+                        yaxis_title="No. of Days",
                         legend_title_text='',
                         legend=dict(yanchor="top", y=1.15, xanchor="left", x=0.02, orientation="h"),
                         margin=dict(l=0, r=0, b=0, t=30, pad=0))
@@ -108,17 +135,18 @@ if uploaded_file is not None:
         fig.add_trace(go.Bar(x=summary_df['Member_Name'], y=summary_df['RW_Distance'],
                             name='RW Distance'))
         fig.update_layout(
+                        yaxis_title="Total KMs",
                         legend_title_text='',
                         legend=dict(yanchor="top", y=1.15, xanchor="left", x=0.02, orientation="h"),
                         margin=dict(l=0, r=0, b=0, t=30, pad=0))
         st.plotly_chart(fig, use_container_width=True)
 
-
-
+    st.markdown("***")
+    st.subheader("Member Activities")
     selected_member = st.selectbox(
-        "Club Members", club_members_lst
+        "Select Member", club_members_lst
     )
-    st.write("You selected:", selected_member)
+    # st.write("You selected:", selected_member)
 
     filt = df["Member_Name"] == selected_member
     rslt_df = df[filt]
@@ -141,7 +169,9 @@ if uploaded_file is not None:
                             name='Cumulative'), secondary_y=True)
         fig.add_trace(go.Bar(x=rw_df.index, y=rw_df['Activity_Distance'], 
                             name='Activity'))
+        fig.update_yaxes(title_text="Total KMs", secondary_y=True)
         fig.update_layout(
+                        yaxis_title="Distance (KMs)",
                         legend_title_text='',
                         legend=dict(yanchor="top", y=1.15, xanchor="left", x=0.02, orientation="h"),
                         margin=dict(l=0, r=0, b=0, t=30, pad=0))
@@ -161,7 +191,9 @@ if uploaded_file is not None:
                             name='Cumulative'), secondary_y=True)
         fig.add_trace(go.Bar(x=ride_df.index, y=ride_df['Activity_Distance'], 
                             name='Activity'))
+        fig.update_yaxes(title_text="Total KMs", secondary_y=True)
         fig.update_layout(
+                        yaxis_title="Distance (KMs)",
                         legend_title_text='',
                         legend=dict(yanchor="top", y=1.15, xanchor="left", x=0.02, orientation="h"),
                         margin=dict(l=0, r=0, b=0, t=30, pad=0))
@@ -180,16 +212,19 @@ if uploaded_file is not None:
                             name='Cumulative'), secondary_y=True)
         fig.add_trace(go.Bar(x=GSY_df.index, y=GSY_df['Activity_Duration'], 
                             name='Activity'))
+        fig.update_yaxes(title_text="Total Minutes", secondary_y=True)
         fig.update_layout(
+                        yaxis_title="Duration (Minutes)",
                         legend_title_text='',
                         legend=dict(yanchor="top", y=1.15, xanchor="left", x=0.02, orientation="h"),
                         margin=dict(l=0, r=0, b=0, t=30, pad=0))
         st.plotly_chart(fig, use_container_width=True)
     
     
+    st.markdown("***")
     st.subheader('Comparison of Run/Walk activities between members')
     options = st.multiselect(
-        "Select multiple members", club_members_lst, selected_member
+        "Select multiple members", club_members_lst
     )
     if len(options) > 0:
         # st.write("You selected:", options)
@@ -206,10 +241,11 @@ if uploaded_file is not None:
                 rw_df = rw_df.groupby('Activity_Date').sum()
                 rw_df['Cumulative'] = rw_df['Activity_Distance'].cumsum()
                 fig.add_trace(go.Scatter(x=rw_df.index, y=rw_df['Cumulative'], showlegend=True, name=member
-                                    ), secondary_y=True)
+                                    ))
                 # fig.add_trace(go.Bar(x=rw_df.index, y=rw_df['Activity_Distance'], 
                 #                     name=member))
         fig.update_layout(
+                        yaxis_title="Total KMs",
                         legend_title_text='',
                         legend=dict(yanchor="top", y=1.15, xanchor="left", x=0.02, orientation="h"),
                         margin=dict(l=0, r=0, b=0, t=30, pad=0))
