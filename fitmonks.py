@@ -28,6 +28,8 @@ else:
 
 url='https://drive.google.com/uc?id=' + url.split('/')[-2]
 
+# url = "data.csv"
+
 @st.cache_data  # 👈 Add the caching decorator
 def load_data(url):
     df = pd.read_csv(url)
@@ -35,7 +37,10 @@ def load_data(url):
 
 
 
-
+if st.button("Refresh Data"):
+    st.cache_data.clear()
+    df = load_data(url)
+        
 if url is not None:
     
     df = load_data(url)
@@ -67,7 +72,9 @@ if url is not None:
     
     start_date = st.date_input("Start Date", min_date, min_value=min_date, max_value=max_date)  # min_value=min_date
     end_date = st.date_input("End Date", max_date, min_value=start_date, max_value=max_date)
-
+    
+    st.write("Updated till ", end_date)
+    
     filt = (df["Activity_Date"] >= start_date) & (df["Activity_Date"] <= end_date)
     df = df[filt]
 
@@ -212,7 +219,7 @@ if url is not None:
                             name='Cumulative'), secondary_y=True)
         fig.add_trace(go.Bar(x=GSY_df.index, y=GSY_df['Activity_Duration'], 
                             name='Activity'))
-        fig.update_yaxes(title_text="Total Minutes", secondary_y=True)
+        fig.update_yaxes(title_text="Total KMs", secondary_y=True)
         fig.update_layout(
                         yaxis_title="Duration (Minutes)",
                         legend_title_text='',
@@ -228,6 +235,8 @@ if url is not None:
     )
     if len(options) > 0:
         # st.write("You selected:", options)
+        # col1, col2 = st.columns(2)
+        # with col1:
         
         fig = go.Figure(make_subplots(specs=[[{"secondary_y": True}]]))
         
@@ -240,14 +249,33 @@ if url is not None:
             if not rw_df.empty:
                 rw_df = rw_df.groupby('Activity_Date').sum()
                 rw_df['Cumulative'] = rw_df['Activity_Distance'].cumsum()
-                fig.add_trace(go.Scatter(x=rw_df.index, y=rw_df['Cumulative'], showlegend=True, name=member
-                                    ))
-                # fig.add_trace(go.Bar(x=rw_df.index, y=rw_df['Activity_Distance'], 
-                #                     name=member))
+                fig.add_trace(go.Scatter(x=rw_df.index, y=rw_df['Cumulative'], showlegend=True, name=member))
         fig.update_layout(
                         yaxis_title="Total KMs",
                         legend_title_text='',
                         legend=dict(yanchor="top", y=1.15, xanchor="left", x=0.02, orientation="h"),
                         margin=dict(l=0, r=0, b=0, t=30, pad=0))
         st.plotly_chart(fig, use_container_width=True)
+        
+        # with col2:
+        
+        # fig = go.Figure(make_subplots(specs=[[{"secondary_y": True}]]))
+        
+        
+        
+        # for member in options:
+        #     filt = df["Member_Name"] == member
+        #     rslt_df = df[filt]
+        #     rslt_df = rslt_df.sort_values(by=['Activity_Date'], ascending=True)
             
+        #     rw_df = rslt_df[(rslt_df['Activity_Type'] == 'Run/Walk')]
+        #     if not rw_df.empty:
+        #         rw_df = rw_df.groupby('Activity_Date').sum()
+        #         rw_df['Cumulative'] = rw_df['Activity_Distance'].cumsum()
+        #         fig.add_trace(go.Bar(x=rw_df.index, y=rw_df['Activity_Distance'], showlegend=True, name=member))
+        # fig.update_layout(
+        #                 yaxis_title="Total KMs",
+        #                 legend_title_text='',
+        #                 legend=dict(yanchor="top", y=1.15, xanchor="left", x=0.02, orientation="h"),
+        #                 margin=dict(l=0, r=0, b=0, t=30, pad=0))
+        # st.plotly_chart(fig, use_container_width=True)
